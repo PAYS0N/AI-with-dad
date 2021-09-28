@@ -1,0 +1,27 @@
+
+Nouns
+	data-element
+		// One of the data elements from which the system must learn.  For example, a picture of a shape.
+	
+	data-example
+		// data-element plus knowledge of what the answer is.  Might want to include a certainty.  For example, a picture of a shape and a boolean or scalar of whether it's a triangle.
+
+	mapping
+		// How to map a data-element to the inputs of a knowledge.  This might be useful if we want to use the same learning engine for lots of different projects in the future... then we just need to create new data and mappings.
+		// FWIW, PME doesn't love this.  mapping has to know about the data-element and knowledge objects, and that breaks isolation of concerns.  Need to think this through.
+
+	knowledge
+		// Data that represents what the system has learned, including all the info needed to add more knowledge.
+		// Depending on how the math works, it might be just the numbers and types of nodes, their linkages, weights, and biases.  Or it might be that, plus a set of every data-example the system has learned from.
+		// Numbers, types, and linkages of nodes will matter a lot, and we might want a way to easily vary this.  For example, we might want a Knowledge class with nodes and layers that can change dynamically; if we ask the system to learn a data-example and it just can't reconcile it with its current knowledge, maybe it can grow its internal network and re-learn all of the data.  In that case, we could start with a trivial mapping - like each pixel maps to a node and each node maps directly to the output node.  Such a network could learn a single shape, but it might be impossible to add a second.  Then the system could automatically add another layer or more nodes in an existing layer.  This needs more thought.
+
+Verbs
+	train (set of data-element, knowledge, mapping)
+		foreach data-element in set-of-data-elements
+			updateKnowledge (knowledge, data-element, mapping)
+
+	updateKnowledge (knowledge, data-element, mapping)
+		// Adjust knowledge by training from data-element.  This will need to map the data element onto the knowledge inputs and adjust the knowledge until it represents everything it knew before plus the new item.
+
+	guess (data-element, knowledge, mapping)
+		// Given the provided knowledge and mapping objects, return a scalar guess for the provided data-element.
