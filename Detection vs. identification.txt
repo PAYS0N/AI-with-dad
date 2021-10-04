@@ -1,0 +1,10 @@
+
+We have to decide whether we want to work on detection or identification first.
+
+Detection would include "Is there a <whatever> in this image?" and "Where is the <whatever> in this image?".
+
+Identification is "Which <whatever> in this image?".
+
+I recommend starting as simple and general as possible, though those are often competing interests.
+
+In this case, for starters, we could go with "Is there a triangle in this image?".  I think that will handle the cases without requiring too much complexity and produce a resuable engine, though it will only output a boolean, not a location or identifier.
