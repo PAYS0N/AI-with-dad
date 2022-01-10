@@ -7,6 +7,9 @@ public class World {
 	}
 
 	private int m_nCyclesRun = 0;
+	public int getCyclesRun() {
+		return m_nCyclesRun;
+	}
 
 	private int m_nWidth;
 	public int getWidth() { 
