@@ -3,11 +3,11 @@ Nouns
 	World
 		This will be the code representation of the domain of the experiment.  It'll have things like a size - perhaps width and height, a list of participants in the world, the number of actions in a cycle and a cycle counter.  It might include something that represents the area where the participants can successfully reproduce - the participants' target zone.
 	
-	Test
-		A (potentially large) set of cycles of reproduction, activity, and selection.
-
-	Cycle
+	Lifespan
 		A (potentially large) set of actions that participants take (like movements in a particular direction), after which the participants will be selected out (die) or selected in (reproduce).
+
+	SimulationRun
+		A (potentially large) set of Lifespans of activity, selection, and reproduction.
 
 	"EvolutionParticipant"?  "GenomeCarrier"?  "Genotype"?
 		We should have one root-level type (in coding, "class") that all of the evolution engine participants inherit from.  It would have some core capability verbs (in coding, "methods"), like "TakeATurn (in the world)", "Reproduce", or "Die".
