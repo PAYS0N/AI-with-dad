@@ -23,5 +23,8 @@ public class World {
 		m_alp.add(p);
 		return p;
 	}
+	protected java.util.ArrayList<Participant> getParticipants() {
+		return m_alp;
+	}
 
 }
