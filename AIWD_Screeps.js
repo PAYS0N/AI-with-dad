@@ -88,7 +88,8 @@ exports.ManageMemory = function() {
 
 //TODO: Find a better way.
 exports.IsASource = function( obj ) {
-	return 'effects' in obj && 'pos' in obj && 'room' in obj && 'energy' in obj && 'energyCapacity' in obj && 'id' in obj && 'ticksToRegeneration' in obj;
+		let bResult = ('pos' in obj) && ('room' in obj) && ('energy' in obj) && ('energyCapacity' in obj) && ('id' in obj) && ('ticksToRegeneration' in obj);
+		return bResult;
 }
 
 //returns array like:
