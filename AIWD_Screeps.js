@@ -22,15 +22,14 @@ exports.GetPositionOf = function( obj ) {
 	throw new TypeError("Argument \"" + obj + "\" does not associate to a position.");
 }
 
-let B_INITIALIZED = false;
 exports.IsInitialized = function() {
-	return B_INITIALIZED;
+	return Memory.flags.bInitialized;
 }
 
 exports.Initialize = function() {
-	if( ! B_INITIALIZED ) {
+	if( ! Memory.flags.bInitialized ) {
 		Memory.flags.bSuicideEmptyUpgraderSmall = false;
-		B_INITIALIZED = true;
+		Memory.flags.bInitialized = true;
 	}
 }
 
