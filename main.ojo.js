@@ -131,15 +131,18 @@ function GetBestTowerLocation( aobjNotProtected, posSpawn, nPreferredCoverageDis
 
 	if( 0 < aobjNotProtected.length ) {
 
-		let aposTowerOptions = GetOutsideTowerPositions( aobjNotProtected, nPreferredCoverageDistance )
+		let nStartingDistance = Math.floor(nPreferredCoverageDistance/2);
+		let aposTowerOptions = GetOutsideTowerPositions( aobjNotProtected, nStartingDistance );
 
 		// this array is used to set additional positions around the source as unusable.
 		let asources = _.filter( aobjNotProtected, (obj) => AIWD_Screeps.IsASource(obj) );
 		
+		let bFound = false;
 		let astepPath = [];
-		let posTarget = aposTowerOptions[0];
-		let nCoverageDistance = nPreferredCoverageDistance;
-		while( 0 == astepPath.length ) {
+		let iTargetChoice = 0;
+		let posTarget = aposTowerOptions[iTargetChoice];
+		let nCoverageDistance = nStartingDistance;
+		while( posTarget && !bFound ) {
 			astepPath = AIWD_Screeps.GetCreepPath( 
 				posSpawn
 				, posTarget
@@ -160,13 +163,26 @@ function GetBestTowerLocation( aobjNotProtected, posSpawn, nPreferredCoverageDis
 					}
 				}
 			);
-			++nCoverageDistance;
+			if( 0 != astepPath.length ) {
+				// && Game.rooms[posTarget.roomName].getPositionAt( stepLast.x, stepLast.y ).getRangeTo() 
+				bFound = true;
+			}
+			else {
+				++nCoverageDistance;
+				if( nCoverageDistance > nPreferredCoverageDistance ) {
+					++iTargetChoice;
+					posTarget = aposTowerOptions[iTargetChoice];
+					nCoverageDistance = nStartingDistance;
+				}
+			}
 		}
 		
-		let stepLast = astepPath[astepPath.length-1];
-		//new RoomVisual('Spawn1').circle(stepLast.x, stepLast.y);
+		if( posTarget ) {
+			let stepLast = astepPath[astepPath.length-1];
+			//new RoomVisual('Spawn1').circle(stepLast.x, stepLast.y);
 
-		posBestChoice = Game.rooms[posTarget.roomName].getPositionAt( stepLast.x, stepLast.y );
+			posBestChoice = Game.rooms[posTarget.roomName].getPositionAt( stepLast.x, stepLast.y );
+		}
 	}
 
 	return posBestChoice;
@@ -178,12 +194,12 @@ function GetBestTowerLocation( aobjNotProtected, posSpawn, nPreferredCoverageDis
 * Manage towers
 *
 */
-function ManageTowers( roomToManage ) {
+function ManageTowers( roomToManage, posBasePath ) {
 
 	if( 0 == roomToManage.find(FIND_CONSTRUCTION_SITES).length && AIWD_Screeps.GetTowersAllowedAtRoomControlLevel( roomToManage.controller.level ) > AIWD_Screeps.GetStructuresInRoom( roomToManage ).filter( (struct) => STRUCTURE_TOWER == struct.structureType ).length ) {
-		let aobjThingsToProtect = GetAllObjectsToProtectInRoom( roomToManage, spawnMain );
+		let aobjThingsToProtect = GetAllObjectsToProtectInRoom( roomToManage, posBasePath );
 		let aobjNotProtected = GetObjectsNotAlreadyProtected( aobjThingsToProtect, 5 );
-		let posNewTower = GetBestTowerLocation( aobjNotProtected, spawnMain, 5 );
+		let posNewTower = GetBestTowerLocation( aobjNotProtected, posBasePath, 5 );
 		if( posNewTower ) {
 			let nResult = roomToManage.createConstructionSite( posNewTower.x, posNewTower.y, STRUCTURE_TOWER );
 			if( 0 != nResult ) {
@@ -430,21 +446,6 @@ function GetObjectsNotAlreadyProtected( aobjThingsToProtect, nTowerRangeRequired
 	return [];	// If we got here, nothing was found to protect.  This shouldn't happen.
 }
 
-// let aposNewTowerLocations = GetPotentialTowerPositionsCovering( aposThingsToProtect );
-function GetPotentialTowerPositionsCovering( aposThingsToProtect ) {
-
-	if( 0 == aposThingsToProtect.length ) {
-		throw new RangeError( 'GetPotentialTowerPositionsCovering called with empty list.' );
-	}
-	else {
-		let posAverage = AIWD_Screeps_Math.FindAverageLocation( aposThingsToProtect );
-		
-		let aposBoundingBox = AIWD_Screeps_Math.GetBoundingBox( aposThingsToProtect );
-		
-		// HERE: now maybe get within 6 of a point that's 5 units away from the center past the point to protect 
-	}
-}
-
 
 module.exports.loop = function () {
 
@@ -472,7 +473,7 @@ module.exports.loop = function () {
 			let objUpgradersResults = ManageUpgraders( spawnMain );
 		}
 		
-		let objTowersResults = ManageTowers( roomCurrent );
+		let objTowersResults = ManageTowers( roomCurrent, spawnMain );
 		
 		let spawningCreep = AIWD_Screeps.GetSpawningCreep( spawnMain );
 		if( spawningCreep ) { 
