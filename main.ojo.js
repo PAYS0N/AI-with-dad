@@ -180,7 +180,7 @@ function GetBestTowerLocation( aobjNotProtected, posSpawn, nPreferredCoverageDis
 */
 function ManageTowers( roomToManage ) {
 
-	if( 0 == roomToManage.find(FIND_CONSTRUCTION_SITES).length && GetTowersAllowedAtRoomControlLevel( roomToManage.controller.level ) > AIWD_Screeps.GetStructuresInRoom( roomToManage ).filter( (struct) => STRUCTURE_TOWER == struct.structureType ).length ) {
+	if( 0 == roomToManage.find(FIND_CONSTRUCTION_SITES).length && AIWD_Screeps.GetTowersAllowedAtRoomControlLevel( roomToManage.controller.level ) > AIWD_Screeps.GetStructuresInRoom( roomToManage ).filter( (struct) => STRUCTURE_TOWER == struct.structureType ).length ) {
 		let aobjThingsToProtect = GetAllObjectsToProtectInRoom( roomToManage, spawnMain );
 		let aobjNotProtected = GetObjectsNotAlreadyProtected( aobjThingsToProtect, 5 );
 		let posNewTower = GetBestTowerLocation( aobjNotProtected, spawnMain, 5 );
@@ -444,38 +444,6 @@ function GetPotentialTowerPositionsCovering( aposThingsToProtect ) {
 		// HERE: now maybe get within 6 of a point that's 5 units away from the center past the point to protect 
 	}
 }
-
-// This data from https://docs.screeps.com/control.html.  Probably best to not use the table directly; use the accessor functions below.
-const aobjBuildingByControllerLevel = [
-	{ nEnergy: 0, nContainers: 5, nSpawns: 0, nExtensions: 0, nExtensionCapacity: 0, nRampartMaxHits: 0, bWalls: false, nTowers: 0, bStorage: false, nLinks: 0, bExtractor: false, nLabs: 0, bTerminal: false, bFactory: false, bObserver: false, bPowerSpawn: false, bNuker: false }
-	, { nEnergy: 200, nContainers: 5, nSpawns: 1, nExtensions: 0, nExtensionCapacity: 0, nRampartMaxHits: 0, bWalls: false, nTowers: 0, bStorage: false, nLinks: 0, bExtractor: false, nLabs: 0, bTerminal: false, bFactory: false, bObserver: false, bPowerSpawn: false, bNuker: false }
-	, { nEnergy: 45000, nContainers: 5, nSpawns: 1, nExtensions: 5, nExtensionCapacity: 50, nRampartMaxHits: 300000, bWalls: true, nTowers: 0, bStorage: false, nLinks: 0, bExtractor: false, nLabs: 0, bTerminal: false, bFactory: false, bObserver: false, bPowerSpawn: false, bNuker: false }
-	, { nEnergy: 135000, nContainers: 5, nSpawns: 1, nExtensions: 10, nExtensionCapacity: 50, nRampartMaxHits: 1000000, bWalls: true, nTowers: 1, bStorage: false, nLinks: 0, bExtractor: false	, nLabs: 0, bTerminal: false, bFactory: false, bObserver: false, bPowerSpawn: false, bNuker: false }
-	, { nEnergy: 405000, nContainers: 5, nSpawns: 1, nExtensions: 20, nExtensionCapacity: 50, nRampartMaxHits: 3000000, bWalls: true, nTowers: 1, bStorage: true, nLinks: 0, bExtractor: false, nLabs: 0, bTerminal: false, bFactory: false, bObserver: false, bPowerSpawn: false, bNuker: false }
-	, { nEnergy: 1215000, nContainers: 5, nSpawns: 1, nExtensions: 30, nExtensionCapacity: 50, nRampartMaxHits: 10000000, bWalls: true, nTowers: 2, bStorage: true, nLinks: 2, bExtractor: false, nLabs: 0, bTerminal: false, bFactory: false, bObserver: false, bPowerSpawn: false, bNuker: false }
-	, { nEnergy: 3645000, nContainers: 5, nSpawns: 1, nExtensions: 40, nExtensionCapacity: 50, nRampartMaxHits: 30000000, bWalls: true, nTowers: 2, bStorage: true, nLinks: 3, bExtractor: true, nLabs: 3, bTerminal: true, bFactory: false, bObserver: false, bPowerSpawn: false, bNuker: false }
-	, { nEnergy: 10935000, nContainers: 5, nSpawns: 2, nExtensions: 50, nExtensionCapacity: 100, nRampartMaxHits: 100000000, bWalls: true, nTowers: 3, bStorage: true, nLinks: 4, bExtractor: true, nLabs: 6, bTerminal: true, bFactory: true, bObserver: false, bPowerSpawn: false, bNuker: false }
-	, { nEnergy: NaN, nContainers: 5, nSpawns: 3, nExtensions: 60, nExtensionCapacity: 200, nRampartMaxHits: 300000000, bWalls: true, nTowers: 6, bStorage: true, nLinks: 6, bExtractor: true, nLabs: 10, bTerminal: true, bFactory: true, bObserver: true, bPowerSpawn: true, bNuker: true }
-];
-
-function GetEnergyCostAtRoomControlLevel( nRoomControlLevel ) { return aobjBuildingByControllerLevel[nRoomControlLevel].nEnergy; }
-function GetContainersAllowedAtRoomControlLevel( nRoomControlLevel ) { return aobjBuildingByControllerLevel[nRoomControlLevel].nSpawns; }
-function GetSpawnsAllowedAtRoomControlLevel( nRoomControlLevel ) { return aobjBuildingByControllerLevel[nRoomControlLevel].nSpawns; }
-function GetExtensionsAllowedAtRoomControlLevel( nRoomControlLevel ) { return aobjBuildingByControllerLevel[nRoomControlLevel].nExtensions; }
-function GetExtensionCapacityAtRoomControlLevel( nRoomControlLevel ) { return aobjBuildingByControllerLevel[nRoomControlLevel].nExtensionCapacity; }
-function GetRampartMaxHitsAtRoomControlLevel( nRoomControlLevel ) { return aobjBuildingByControllerLevel[nRoomControlLevel].nRampartMaxHits; }
-function IsWallAllowedAtRoomControlLevel( nRoomControlLevel ) { return aobjBuildingByControllerLevel[nRoomControlLevel].bWalls; }
-function GetTowersAllowedAtRoomControlLevel( nRoomControlLevel ) { return aobjBuildingByControllerLevel[nRoomControlLevel].nTowers; }
-function IsStorageAllowedAtRoomControlLevel( nRoomControlLevel ) { return aobjBuildingByControllerLevel[nRoomControlLevel].bStorage; }
-function GetLinksAllowedAtRoomControlLevel( nRoomControlLevel ) { return aobjBuildingByControllerLevel[nRoomControlLevel].nLinks; }
-function IsExtractorAllowedAtRoomControlLevel( nRoomControlLevel ) { return aobjBuildingByControllerLevel[nRoomControlLevel].bExtractor; }
-function GetLabsAllowedAtRoomControlLevel( nRoomControlLevel ) { return aobjBuildingByControllerLevel[nRoomControlLevel].nLabs; }
-function IsTerminalAllowedAtRoomControlLevel( nRoomControlLevel ) { return aobjBuildingByControllerLevel[nRoomControlLevel].bTerminal; }
-function IsFactoryAllowedAtRoomControlLevel( nRoomControlLevel ) { return aobjBuildingByControllerLevel[nRoomControlLevel].bFactory; }
-function IsObserverAllowedAtRoomControlLevel( nRoomControlLevel ) { return aobjBuildingByControllerLevel[nRoomControlLevel].bObserver; }
-function IsPowerSpawnAllowedAtRoomControlLevel( nRoomControlLevel ) { return aobjBuildingByControllerLevel[nRoomControlLevel].bPowerSpawn; }
-function IsNukerAllowedAtRoomControlLevel( nRoomControlLevel ) { return aobjBuildingByControllerLevel[nRoomControlLevel].bNuker; }
-
 
 
 module.exports.loop = function () {
