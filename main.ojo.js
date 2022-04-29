@@ -178,65 +178,18 @@ function GetBestTowerLocation( aobjNotProtected, posSpawn, nPreferredCoverageDis
 * Manage towers
 *
 */
-function ManageTowers() {
-	
-	const nTowerConstructionSites = _.reduce( 
-		Game.constructionSites
-		, (previousValue, csite) => previousValue + (STRUCTURE_TOWER == csite.structureType ? 1 : 0)
-		, 0
-	);
-	//console.log( "Total tower construction sites = [" + nTowerConstructionSites + "]" );
-	
-    let astructTowers = _.filter(Game.structures, (struct) => STRUCTURE_TOWER == struct.structureType );
-	//console.log( "Found " + astructTowers.length + " tower(s)" );
-    let astructTowersNot = _.filter(Game.structures, (struct) => STRUCTURE_TOWER != struct.structureType );
-	//console.log( "Found " + astructTowersNot.length + " NON-tower(s)" );
-	
-	let nRangeRequired = 5;
-	
-	// if we're not already building a tower
-	if( 0 == nTowerConstructionSites ) {
+function ManageTowers( roomToManage ) {
 
-		// Find all the structures I own that aren't within desired distance of a tower I own.
-		// Find all the structures I own that are within desired distance of a tower I own.
-		let astructProtected = [];
-		let astructIdLikeProtected = [];
-		if( 0 < astructTowers.length ) {
-			// There are towers... so find all the unprotected ones.
-			for( let iStructure in astructTowersNot ) {
-				let structNotTower = astructTowersNot[iStructure];
-				let nRangeToClosestTower = _.reduce( 
-					astructTowers
-					, (previousValue, struct) => { let nRange = structNotTower.pos.getRangeTo(struct); return previousValue < nRange ? previousValue : nRange }
-					, NaN 
-				);
-				//console.log( "\tNon-tower \"" + astructTowersNot[iStructure].name + "\" (\"" + astructTowersNot[iStructure].structureType + "\"): closest range to tower: [" + nRangeToClosestTower + "]" );
-				if( NaN == nRangeToClosestTower || nRangeToClosestTower > nRangeRequired ) {
-					astructIdLikeProtected.push(structNotTower);
-				}
-				else {
-					astructProtected.push(structNotTower);
-				}
+	if( 0 == roomToManage.find(FIND_CONSTRUCTION_SITES).length && GetTowersAllowedAtRoomControlLevel( roomToManage.controller.level ) > AIWD_Screeps.GetStructuresInRoom( roomToManage ).filter( (struct) => STRUCTURE_TOWER == struct.structureType ).length ) {
+		let aobjThingsToProtect = GetAllObjectsToProtectInRoom( roomToManage, spawnMain );
+		let aobjNotProtected = GetObjectsNotAlreadyProtected( aobjThingsToProtect, 5 );
+		let posNewTower = GetBestTowerLocation( aobjNotProtected, spawnMain, 5 );
+		if( posNewTower ) {
+			let nResult = roomToManage.createConstructionSite( posNewTower.x, posNewTower.y, STRUCTURE_TOWER );
+			if( 0 != nResult ) {
+console.log( "Tower construction result (" + posNewTower.x + ", " + posNewTower.y + "): " + nResult );
 			}
 		}
-		else {
-			// No towers... I want all non-tower structures protected.
-			astructIdLikeProtected = astructTowersNot;
-		}
-		//console.log( "Structs protected: [" + astructProtected.length + "]; structs unprotected: [" + astructIdLikeProtected.length + "]" );
-
-		// For each unprotected structure I own
-			// find a location that:
-				// LATER: is on or inside the boundary
-				// is empty
-				// can path from the spawn to it
-				// covers the structure
-				// is in range of the fewest structures already covered by towers
-					// NOTE: Room.findPath options include a "range to target" option that might help here.
-				// is in range of the most structures not already covered by a tower
-					// NOTE: Room.findPath options include a "range to target" option that might help here.
-				// is as far away as possible from other towers
-			// start building a tower there
 	}
 	
     for( let strStructureName in Game.structures ) {
@@ -492,7 +445,7 @@ function GetPotentialTowerPositionsCovering( aposThingsToProtect ) {
 	}
 }
 
-
+// This data from https://docs.screeps.com/control.html.  Probably best to not use the table directly; use the accessor functions below.
 const aobjBuildingByControllerLevel = [
 	{ nEnergy: 0, nContainers: 5, nSpawns: 0, nExtensions: 0, nExtensionCapacity: 0, nRampartMaxHits: 0, bWalls: false, nTowers: 0, bStorage: false, nLinks: 0, bExtractor: false, nLabs: 0, bTerminal: false, bFactory: false, bObserver: false, bPowerSpawn: false, bNuker: false }
 	, { nEnergy: 200, nContainers: 5, nSpawns: 1, nExtensions: 0, nExtensionCapacity: 0, nRampartMaxHits: 0, bWalls: false, nTowers: 0, bStorage: false, nLinks: 0, bExtractor: false, nLabs: 0, bTerminal: false, bFactory: false, bObserver: false, bPowerSpawn: false, bNuker: false }
@@ -504,6 +457,25 @@ const aobjBuildingByControllerLevel = [
 	, { nEnergy: 10935000, nContainers: 5, nSpawns: 2, nExtensions: 50, nExtensionCapacity: 100, nRampartMaxHits: 100000000, bWalls: true, nTowers: 3, bStorage: true, nLinks: 4, bExtractor: true, nLabs: 6, bTerminal: true, bFactory: true, bObserver: false, bPowerSpawn: false, bNuker: false }
 	, { nEnergy: NaN, nContainers: 5, nSpawns: 3, nExtensions: 60, nExtensionCapacity: 200, nRampartMaxHits: 300000000, bWalls: true, nTowers: 6, bStorage: true, nLinks: 6, bExtractor: true, nLabs: 10, bTerminal: true, bFactory: true, bObserver: true, bPowerSpawn: true, bNuker: true }
 ];
+
+function GetEnergyCostAtRoomControlLevel( nRoomControlLevel ) { return aobjBuildingByControllerLevel[nRoomControlLevel].nEnergy; }
+function GetContainersAllowedAtRoomControlLevel( nRoomControlLevel ) { return aobjBuildingByControllerLevel[nRoomControlLevel].nSpawns; }
+function GetSpawnsAllowedAtRoomControlLevel( nRoomControlLevel ) { return aobjBuildingByControllerLevel[nRoomControlLevel].nSpawns; }
+function GetExtensionsAllowedAtRoomControlLevel( nRoomControlLevel ) { return aobjBuildingByControllerLevel[nRoomControlLevel].nExtensions; }
+function GetExtensionCapacityAtRoomControlLevel( nRoomControlLevel ) { return aobjBuildingByControllerLevel[nRoomControlLevel].nExtensionCapacity; }
+function GetRampartMaxHitsAtRoomControlLevel( nRoomControlLevel ) { return aobjBuildingByControllerLevel[nRoomControlLevel].nRampartMaxHits; }
+function IsWallAllowedAtRoomControlLevel( nRoomControlLevel ) { return aobjBuildingByControllerLevel[nRoomControlLevel].bWalls; }
+function GetTowersAllowedAtRoomControlLevel( nRoomControlLevel ) { return aobjBuildingByControllerLevel[nRoomControlLevel].nTowers; }
+function IsStorageAllowedAtRoomControlLevel( nRoomControlLevel ) { return aobjBuildingByControllerLevel[nRoomControlLevel].bStorage; }
+function GetLinksAllowedAtRoomControlLevel( nRoomControlLevel ) { return aobjBuildingByControllerLevel[nRoomControlLevel].nLinks; }
+function IsExtractorAllowedAtRoomControlLevel( nRoomControlLevel ) { return aobjBuildingByControllerLevel[nRoomControlLevel].bExtractor; }
+function GetLabsAllowedAtRoomControlLevel( nRoomControlLevel ) { return aobjBuildingByControllerLevel[nRoomControlLevel].nLabs; }
+function IsTerminalAllowedAtRoomControlLevel( nRoomControlLevel ) { return aobjBuildingByControllerLevel[nRoomControlLevel].bTerminal; }
+function IsFactoryAllowedAtRoomControlLevel( nRoomControlLevel ) { return aobjBuildingByControllerLevel[nRoomControlLevel].bFactory; }
+function IsObserverAllowedAtRoomControlLevel( nRoomControlLevel ) { return aobjBuildingByControllerLevel[nRoomControlLevel].bObserver; }
+function IsPowerSpawnAllowedAtRoomControlLevel( nRoomControlLevel ) { return aobjBuildingByControllerLevel[nRoomControlLevel].bPowerSpawn; }
+function IsNukerAllowedAtRoomControlLevel( nRoomControlLevel ) { return aobjBuildingByControllerLevel[nRoomControlLevel].bNuker; }
+
 
 
 module.exports.loop = function () {
@@ -526,27 +498,13 @@ module.exports.loop = function () {
 			// Gather
 			// Upgrade/expand
 
-		
-//			roomCurrent.controller.level > 
-//		AIWD_Screeps.GetStructuresInRoom( roomCurrent ).filter( (struct) => STRUCTURE_TOWER == struct.structureType ).length
-		if( 0 == roomCurrent.find(FIND_CONSTRUCTION_SITES).length ) {
-			let aobjThingsToProtect = GetAllObjectsToProtectInRoom( roomCurrent, spawnMain );
-			let aobjNotProtected = GetObjectsNotAlreadyProtected( aobjThingsToProtect, 5 );
-			let posNewTower = GetBestTowerLocation( aobjNotProtected, spawnMain, 5 );
-			if( posNewTower ) {
-				let nResult = roomCurrent.createConstructionSite( posNewTower.x, posNewTower.y, STRUCTURE_TOWER );
-				if( 0 != nResult )
-console.log( "Tower construction result (" + posNewTower.x + ", " + posNewTower.y + "): " + nResult );
-			}
-		}
-		
 		let objHarvestersResults = ManageHarvesters( spawnMain );
 		
 		if( 0 < objHarvestersResults.nHarvestersBefore ) {
 			let objUpgradersResults = ManageUpgraders( spawnMain );
 		}
 		
-		let objTowersResults = ManageTowers();
+		let objTowersResults = ManageTowers( roomCurrent );
 		
 		let spawningCreep = AIWD_Screeps.GetSpawningCreep( spawnMain );
 		if( spawningCreep ) { 
